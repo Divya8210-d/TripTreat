@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Card,
   CardContent,
@@ -13,8 +13,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CalendarIcon, Clock, User, Upload } from 'lucide-react';
+import { CalendarIcon, User, Upload, Edit3, Save, X, Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -23,18 +22,39 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { UserIcon, PlaneTakeoff, SettingsIcon } from 'lucide-react';
 
 const ProfilePage = () => {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
   const [bookings, setBookings] = useState<any[]>([]);
-  const [hostApplications, setHostApplications] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Edit mode state
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editForm, setEditForm] = useState({
+    first_name: '',
+    last_name: '',
+    phone: ''
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [showAvatarOptions, setShowAvatarOptions] = useState(false);
+  const [tempAvatarUrl, setTempAvatarUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) {
       fetchUserData();
     }
   }, [user]);
+
+  // Cleanup temp URL when component unmounts or temp URL changes
+  useEffect(() => {
+    return () => {
+      if (tempAvatarUrl) {
+        URL.revokeObjectURL(tempAvatarUrl);
+      }
+    };
+  }, [tempAvatarUrl]);
 
   const fetchUserData = async () => {
     setIsLoading(true);
@@ -58,16 +78,6 @@ const ProfilePage = () => {
 
       if (bookingError) throw bookingError;
       setBookings(bookingData || []);
-
-      // Fetch host applications
-      const { data: hostData, error: hostError } = await supabase
-        .from('host_applications')
-        .select('*')
-        .eq('user_id', user!.id)
-        .order('created_at', { ascending: false });
-
-      if (hostError) throw hostError;
-      setHostApplications(hostData || []);
     } catch (error: any) {
       // Log error for debugging in development
       if (import.meta.env.DEV) {
@@ -80,14 +90,119 @@ const ProfilePage = () => {
   };
 
   const handleEditProfile = () => {
-    // Navigate to edit profile page
-    toast.info('Edit profile feature coming soon.');
+    setIsEditMode(true);
+    setEditForm({
+      first_name: profile?.first_name || '',
+      last_name: profile?.last_name || '',
+      phone: profile?.phone || ''
+    });
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
+  const handleCancelEdit = () => {
+    setIsEditMode(false);
+    setEditForm({
+      first_name: '',
+      last_name: '',
+      phone: ''
+    });
+    setTempAvatarUrl(null);
+    setSelectedFile(null);
+    setShowAvatarOptions(false);
   };
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    
+    setIsSaving(true);
+    try {
+      let avatarUrl = profile?.avatar_url;
+
+      // Handle avatar changes
+      if (selectedFile) {
+        // Upload new avatar
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('user-images')
+          .upload(fileName, selectedFile);
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('user-images')
+          .getPublicUrl(fileName);
+
+        avatarUrl = publicUrl;
+      } else if (tempAvatarUrl === null && selectedFile === null && profile?.avatar_url) {
+        // Avatar is being removed (user clicked remove but no new file selected)
+        avatarUrl = undefined;
+      }
+
+      // Update profile with all data including new avatar URL
+      const updateData: any = {
+        first_name: editForm.first_name,
+        last_name: editForm.last_name,
+        phone: editForm.phone,
+        updated_at: new Date().toISOString()
+      };
+
+      // Only update avatar_url if it's not undefined
+      if (avatarUrl !== undefined) {
+        updateData.avatar_url = avatarUrl;
+      } else {
+        updateData.avatar_url = null;
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      toast.success('Profile updated successfully!');
+      setIsEditMode(false);
+      setTempAvatarUrl(null);
+      setSelectedFile(null);
+      setShowAvatarOptions(false);
+      
+      // Refresh the profile data without full page reload
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      toast.error('Failed to update profile. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAvatarClick = () => {
+    if (isEditMode) {
+      setShowAvatarOptions(!showAvatarOptions);
+    }
+  };
+
+  const handleRemoveAvatar = () => {
+    setTempAvatarUrl(null);
+    setSelectedFile(null);
+    setShowAvatarOptions(false);
+    toast.success('Profile picture will be removed when you save changes');
+  };
+
+  const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Create a temporary URL for preview
+    const tempUrl = URL.createObjectURL(file);
+    setTempAvatarUrl(tempUrl);
+    setSelectedFile(file);
+    setShowAvatarOptions(false);
+    toast.success('Image selected. Please click "Save Changes".');
+  };
+
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -119,13 +234,59 @@ const ProfilePage = () => {
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex flex-col items-center">
-                    <Avatar className="h-24 w-24">
-                      <AvatarImage src={profile?.avatar_url} />
-                      <AvatarFallback className="bg-primary text-primary-foreground text-4xl">
-                        {profile?.first_name?.[0]}
-                        {profile?.last_name?.[0]}
-                      </AvatarFallback>
-                    </Avatar>
+                    <div className="relative">
+                      <Avatar className="h-24 w-24">
+                        <AvatarImage src={tempAvatarUrl || profile?.avatar_url} />
+                        <AvatarFallback className="bg-primary text-primary-foreground text-4xl">
+                          {profile?.first_name?.[0]}
+                          {profile?.last_name?.[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      {isEditMode && (
+                        <div 
+                          className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center cursor-pointer hover:bg-opacity-60 transition-all"
+                          onClick={handleAvatarClick}
+                        >
+                          <Pencil className="h-6 w-6 text-white" />
+                        </div>
+                      )}
+                      {tempAvatarUrl && (
+                        <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                          New
+                        </div>
+                      )}
+                      {showAvatarOptions && (
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-white border rounded-lg shadow-lg p-2 z-10">
+                          <div className="flex flex-col gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => fileInputRef.current?.click()}
+                              className="justify-start"
+                            >
+                              <Upload className="h-4 w-4 mr-2" />
+                              Upload New
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleRemoveAvatar}
+                              className="justify-start text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Remove
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleAvatarUpload}
+                      accept="image/*"
+                      className="hidden"
+                    />
 
                     <h2 className="mt-4 text-xl font-bold">
                       {profile?.first_name} {profile?.last_name}
@@ -189,17 +350,35 @@ const ProfilePage = () => {
                         <h3 className="text-sm font-medium text-muted-foreground mb-1">
                           First Name
                         </h3>
-                        <p className="text-foreground">
-                          {profile?.first_name || 'Not set'}
-                        </p>
+                        {isEditMode ? (
+                          <Input
+                            value={editForm.first_name}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, first_name: e.target.value }))}
+                            placeholder="Enter first name"
+                            className="w-full"
+                          />
+                        ) : (
+                          <p className="text-foreground">
+                            {profile?.first_name || 'Not set'}
+                          </p>
+                        )}
                       </div>
                       <div>
                         <h3 className="text-sm font-medium text-muted-foreground mb-1">
                           Last Name
                         </h3>
-                        <p className="text-foreground">
-                          {profile?.last_name || 'Not set'}
-                        </p>
+                        {isEditMode ? (
+                          <Input
+                            value={editForm.last_name}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, last_name: e.target.value }))}
+                            placeholder="Enter last name"
+                            className="w-full"
+                          />
+                        ) : (
+                          <p className="text-foreground">
+                            {profile?.last_name || 'Not set'}
+                          </p>
+                        )}
                       </div>
                       <div>
                         <h3 className="text-sm font-medium text-muted-foreground mb-1">
@@ -211,9 +390,18 @@ const ProfilePage = () => {
                         <h3 className="text-sm font-medium text-muted-foreground mb-1">
                           Phone
                         </h3>
-                        <p className="text-foreground">
-                          {profile?.phone || 'Not set'}
-                        </p>
+                        {isEditMode ? (
+                          <Input
+                            value={editForm.phone}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
+                            placeholder="Enter phone number"
+                            className="w-full"
+                          />
+                        ) : (
+                          <p className="text-foreground">
+                            {profile?.phone || 'Not set'}
+                          </p>
+                        )}
                       </div>
                       <div>
                         <h3 className="text-sm font-medium text-muted-foreground mb-1">
@@ -239,16 +427,34 @@ const ProfilePage = () => {
                     <div className="pt-4 border-t">
                       <h3 className="font-semibold mb-2">Profile Settings</h3>
                       <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleEditProfile}
-                        >
-                          <User className="h-4 w-4 mr-2" /> Update Profile
-                        </Button>
-                        <Button variant="outline" size="sm" disabled>
-                          <Upload className="h-4 w-4 mr-2" /> Change Photo
-                        </Button>
+                        {!isEditMode ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleEditProfile}
+                          >
+                            <Edit3 className="h-4 w-4 mr-2" /> Update Profile
+                          </Button>
+                        ) : (
+                          <>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={handleSaveProfile}
+                              disabled={isSaving}
+                            >
+                              <Save className="h-4 w-4 mr-2" /> 
+                              {isSaving ? 'Saving...' : 'Save Changes'}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleCancelEdit}
+                            >
+                              <X className="h-4 w-4 mr-2" /> Cancel
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -434,16 +640,34 @@ const ProfilePage = () => {
                     <div className="pt-4 border-t">
                       <h3 className="font-semibold mb-2">Profile Settings</h3>
                       <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleEditProfile}
-                        >
-                          <User className="h-4 w-4 mr-2" /> Update Profile
-                        </Button>
-                        <Button variant="outline" size="sm" disabled>
-                          <Upload className="h-4 w-4 mr-2" /> Change Photo
-                        </Button>
+                        {!isEditMode ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleEditProfile}
+                          >
+                            <Edit3 className="h-4 w-4 mr-2" /> Update Profile
+                          </Button>
+                        ) : (
+                          <>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={handleSaveProfile}
+                              disabled={isSaving}
+                            >
+                              <Save className="h-4 w-4 mr-2" /> 
+                              {isSaving ? 'Saving...' : 'Save Changes'}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleCancelEdit}
+                            >
+                              <X className="h-4 w-4 mr-2" /> Cancel
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </CardContent>
