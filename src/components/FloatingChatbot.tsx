@@ -21,17 +21,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 
-type ChatbotProps = {
-  className?: string;
-};
-
-interface ChatMessage {
-  text: string;
-  isUser: boolean;
-  id: string;
-  isItinerary?: boolean;
-}
-
 const FloatingChatbot: React.FC<ChatbotProps> = ({ className }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -186,7 +175,7 @@ const FloatingChatbot: React.FC<ChatbotProps> = ({ className }) => {
               false
             );
           }, 1000);
-        } catch (error: any) {
+        } catch (error: unknown) {
           // Log error for debugging in development
           if (import.meta.env.DEV) {
             console.error('Error generating itinerary:', error);
@@ -267,7 +256,7 @@ const FloatingChatbot: React.FC<ChatbotProps> = ({ className }) => {
         "Great! I've saved this itinerary to your profile. You can view it anytime in your Profile > My Planned Tours section.",
         false
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Log error for debugging in development
       if (import.meta.env.DEV) {
         console.error('Error saving itinerary:', error);

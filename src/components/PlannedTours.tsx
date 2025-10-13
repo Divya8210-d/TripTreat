@@ -55,7 +55,7 @@ const PlannedTours: React.FC = () => {
       if (error) throw error;
 
       setTours(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Log error for debugging in development
       if (import.meta.env.DEV) {
         console.error('Error fetching planned tours:', error);
@@ -77,7 +77,7 @@ const PlannedTours: React.FC = () => {
 
       setTours(tours.filter(tour => tour.id !== id));
       toast.success('Tour plan deleted successfully');
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Log error for debugging in development
       if (import.meta.env.DEV) {
         console.error('Error deleting tour:', error);

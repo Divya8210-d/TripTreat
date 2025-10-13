@@ -9,17 +9,6 @@ import {
 } from '@/components/ui/card';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 
-interface Props {
-  children: ReactNode;
-  fallback?: ReactNode;
-}
-
-interface State {
-  hasError: boolean;
-  error?: Error;
-  errorInfo?: ErrorInfo;
-}
-
 class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);

@@ -84,19 +84,19 @@ const products = [
     website: 'www.kangleicrafters.com',
     location: 'Imphal, Manipur',
   },
-];
+] satisfies Product[];
 
 const StorePage = () => {
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
   const [orderDialogOpen, setOrderDialogOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product>(null);
 
-  const handleContactClick = (product: any) => {
+  const handleContactClick = (product: Product) => {
     setSelectedProduct(product);
     setContactDialogOpen(true);
   };
 
-  const handleOrderClick = (product: any) => {
+  const handleOrderClick = (product: Product) => {
     setSelectedProduct(product);
     setOrderDialogOpen(true);
     toast.success('Order initiated!', {

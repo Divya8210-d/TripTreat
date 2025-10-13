@@ -24,7 +24,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 const BookingsPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [bookings, setBookings] = useState<any[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -58,7 +58,7 @@ const BookingsPage = () => {
       if (error) throw error;
 
       setBookings(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Log error for debugging in development
       if (import.meta.env.DEV) {
         console.error('Error fetching bookings:', error);
@@ -89,7 +89,7 @@ const BookingsPage = () => {
       );
 
       toast.success('Booking cancelled successfully');
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Log error for debugging in development
       if (import.meta.env.DEV) {
         console.error('Error cancelling booking:', error);

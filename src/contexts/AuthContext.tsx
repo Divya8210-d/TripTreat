@@ -3,34 +3,6 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-interface Profile {
-  id: string;
-  email: string;
-  first_name?: string;
-  last_name?: string;
-  phone?: string;
-  avatar_url?: string;
-  role: 'user' | 'host' | 'admin';
-  created_at: string;
-  updated_at: string;
-}
-
-type AuthContextType = {
-  session: Session | null;
-  user: User | null;
-  profile: Profile | null;
-  isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (
-    email: string,
-    password: string,
-    userData: object
-  ) => Promise<{ error: Error | null; data: { user: User | null } | null }>;
-  signOut: () => Promise<void>;
-  isAdmin: boolean;
-  isHost: boolean;
-};
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -134,7 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       toast.success('Signed in successfully');
       return { error: null };
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Sign in failed');
       return { error };
     }

@@ -35,17 +35,17 @@ import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 
 const ContactPage = () => {
-  const form = useForm({
-    defaultValues: {
-      name: '',
-      email: '',
-      phone: '',
-      subject: '',
-      message: '',
-    },
-  });
+  const defaultValues = {
+    name: '',
+    email: '',
+    phone: '',
+    subject: '',
+    message: '',
+  } satisfies Readonly<ContactForm>;
 
-  const onSubmit = (data: any) => {
+  const form = useForm({ defaultValues });
+
+  const onSubmit = () => {
     // TODO: Implement actual form submission logic
     toast.success('Your message has been sent!', {
       description: 'We will get back to you within 24 hours.',

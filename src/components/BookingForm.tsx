@@ -24,12 +24,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import LoginPromptModal from '@/components/LoginPromptModal';
 import { supabase } from '@/integrations/supabase/client';
 
-interface BookingFormProps {
-  listingId: string;
-  pricePerNight: number;
-  maxGuests: number;
-}
-
 const BookingForm: React.FC<BookingFormProps> = ({
   listingId,
   pricePerNight,
@@ -40,12 +34,14 @@ const BookingForm: React.FC<BookingFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const form = useForm({
-    defaultValues: {
+  const defaultValues = {
       checkInDate: undefined,
       checkOutDate: undefined,
       guests: 1,
-    },
+  } satisfies Readonly<BookingForm>
+
+  const form = useForm({
+    defaultValues
   });
 
   const watchCheckIn = form.watch('checkInDate');
@@ -54,8 +50,10 @@ const BookingForm: React.FC<BookingFormProps> = ({
 
   // Calculate number of nights and total price
   const calculateNights = () => {
-    if (!watchCheckIn || !watchCheckOut) return 0;
-
+    if (!watchCheckIn || !watchCheckOut) {
+      return 0;
+    }
+  
     const checkIn = new Date(watchCheckIn);
     const checkOut = new Date(watchCheckOut);
     const diffTime = Math.abs(checkOut.getTime() - checkIn.getTime());
@@ -70,11 +68,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
   // Create an array with numbers from 1 to maxGuests
   const guestOptions = Array.from({ length: maxGuests }, (_, i) => i + 1);
 
-  const handleBooking = async (data: {
-    checkInDate: string;
-    checkOutDate: string;
-    guests: number;
-  }) => {
+  const handleBooking = async (data: BookingForm) => {
     if (!user) {
       setShowLoginModal(true);
       return;
@@ -113,7 +107,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
 
       // Redirect to booking confirmation page or user bookings
       navigate('/bookings');
-    } catch (error) {
+    } catch (error: unknown) {
       // Log error for debugging in development
       if (import.meta.env.DEV) {
         console.error('Error creating booking:', error);
@@ -121,7 +115,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
 
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to create booking';
-      const errorCode = (error as any)?.code;
+      const errorCode = (error as unknown)?.code;
 
       if (errorCode === '23514') {
         toast.error('Booking dates conflict with an existing reservation');

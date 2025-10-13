@@ -27,19 +27,18 @@ const BecomeHostForm = () => {
   const navigate = useNavigate();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
-  // Simple form without zod for now
-  const form = useForm({
-    defaultValues: {
-      name: '',
-      email: '',
-      phone: '',
-      address: '',
-      hostType: 'homestay',
-      description: '',
-    },
-  });
+  const defaultValues = {
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    hostType: 'homestay',
+    description: '',
+  } satisfies Readonly<HostApplicationForm>;
+  
+  const form = useForm({ defaultValues });
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: HostApplicationForm) => {
     if (!user) {
       setShowLoginModal(true);
       return;
@@ -92,7 +91,7 @@ const BecomeHostForm = () => {
 
       // Redirect to profile page where they can see application status
       navigate('/profile');
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Log error for debugging in development
       if (import.meta.env.DEV) {
         console.error('Error submitting host application:', error);

@@ -1,16 +1,9 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 
-type Theme = 'dark' | 'light' | 'system';
-
-type ThemeProviderProps = {
-  children: React.ReactNode;
+interface ThemeProviderProps {
+  children: React.ReachNode;
   defaultTheme?: Theme;
   storageKey?: string;
-};
-
-type ThemeProviderState = {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
 };
 
 const ThemeProviderContext = createContext<ThemeProviderState | undefined>(
