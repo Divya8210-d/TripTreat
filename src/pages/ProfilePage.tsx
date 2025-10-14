@@ -192,6 +192,9 @@ const ProfilePage = () => {
       setTempAvatarUrl(null);
       setSelectedFile(null);
       setShowAvatarOptions(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       
       // Refresh relevant data without a full page reload
       await fetchUserData();
@@ -226,6 +229,9 @@ const ProfilePage = () => {
     setTempAvatarUrl(null);
     setSelectedFile(null);
     setShowAvatarOptions(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
     toast.success('Profile picture will be removed when you save changes');
   };
 
@@ -238,6 +244,10 @@ const ProfilePage = () => {
     setTempAvatarUrl(tempUrl);
     setSelectedFile(file);
     setShowAvatarOptions(false);
+    // Reset the input so selecting the same file later still triggers onChange
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
     toast.success('Image selected. Please click "Save Changes".');
   };
 
@@ -274,7 +284,7 @@ const ProfilePage = () => {
                   <div className="flex flex-col items-center">
                     <div className="relative">
                       <Avatar className="h-24 w-24">
-                        <AvatarImage src={tempAvatarUrl || localProfile?.avatar_url || undefined} />
+                        <AvatarImage src={tempAvatarUrl ?? (localProfile?.avatar_url || undefined)} />
                         <AvatarFallback className="bg-primary text-primary-foreground text-4xl">
                           {profile?.first_name?.[0]}
                           {profile?.last_name?.[0]}
