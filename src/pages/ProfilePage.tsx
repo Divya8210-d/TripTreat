@@ -41,12 +41,18 @@ const ProfilePage = () => {
   const [tempAvatarUrl, setTempAvatarUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [localProfile, setLocalProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
     if (user) {
       fetchUserData();
     }
   }, [user]);
+
+  // Mirror global profile into a local copy for instant UI updates
+  useEffect(() => {
+    setLocalProfile(profile ?? null);
+  }, [profile]);
 
   // Cleanup temp URL when component unmounts or temp URL changes
   useEffect(() => {
@@ -111,9 +117,9 @@ const ProfilePage = () => {
   const handleEditProfile = () => {
     setIsEditMode(true);
     setEditForm({
-      first_name: profile?.first_name || '',
-      last_name: profile?.last_name || '',
-      phone: profile?.phone || ''
+      first_name: localProfile?.first_name || '',
+      last_name: localProfile?.last_name || '',
+      phone: localProfile?.phone || ''
     });
   };
 
@@ -134,7 +140,7 @@ const ProfilePage = () => {
     
     setIsSaving(true);
     try {
-      let avatarUrl = profile?.avatar_url;
+      let avatarUrl = localProfile?.avatar_url;
 
       // Handle avatar changes
       if (selectedFile) {
@@ -154,7 +160,7 @@ const ProfilePage = () => {
           .getPublicUrl(fileName);
 
         avatarUrl = publicUrl;
-      } else if (tempAvatarUrl === null && selectedFile === null && profile?.avatar_url) {
+      } else if (tempAvatarUrl === null && selectedFile === null && localProfile?.avatar_url) {
         // Avatar is being removed (user clicked remove but no new file selected)
         avatarUrl = undefined;
       }
@@ -187,8 +193,21 @@ const ProfilePage = () => {
       setSelectedFile(null);
       setShowAvatarOptions(false);
       
-      // Refresh the profile data without full page reload
-      window.location.reload();
+      // Refresh relevant data without a full page reload
+      await fetchUserData();
+
+      // Optimistically update local profile for immediate UI reflection
+      setLocalProfile(prev => {
+        const previous = prev ?? ({} as Profile);
+        return {
+          ...previous,
+          first_name: editForm.first_name,
+          last_name: editForm.last_name,
+          phone: editForm.phone,
+          avatar_url: avatarUrl !== undefined ? (avatarUrl ?? null) : null,
+          updated_at: new Date().toISOString(),
+        } as Profile;
+      });
     } catch (error: any) {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile. Please try again.');
@@ -255,7 +274,7 @@ const ProfilePage = () => {
                   <div className="flex flex-col items-center">
                     <div className="relative">
                       <Avatar className="h-24 w-24">
-                        <AvatarImage src={tempAvatarUrl || profile?.avatar_url} />
+                        <AvatarImage src={tempAvatarUrl || localProfile?.avatar_url || undefined} />
                         <AvatarFallback className="bg-primary text-primary-foreground text-4xl">
                           {profile?.first_name?.[0]}
                           {profile?.last_name?.[0]}
@@ -308,7 +327,7 @@ const ProfilePage = () => {
                     />
 
                     <h2 className="mt-4 text-xl font-bold">
-                      {profile?.first_name} {profile?.last_name}
+                      {localProfile?.first_name} {localProfile?.last_name}
                     </h2>
                     <p className="text-sm text-muted-foreground">
                       {user?.email}
@@ -378,7 +397,7 @@ const ProfilePage = () => {
                           />
                         ) : (
                           <p className="text-foreground">
-                            {profile?.first_name || 'Not set'}
+                            {localProfile?.first_name || 'Not set'}
                           </p>
                         )}
                       </div>
@@ -395,7 +414,7 @@ const ProfilePage = () => {
                           />
                         ) : (
                           <p className="text-foreground">
-                            {profile?.last_name || 'Not set'}
+                            {localProfile?.last_name || 'Not set'}
                           </p>
                         )}
                       </div>
@@ -418,7 +437,7 @@ const ProfilePage = () => {
                           />
                         ) : (
                           <p className="text-foreground">
-                            {profile?.phone || 'Not set'}
+                            {localProfile?.phone || 'Not set'}
                           </p>
                         )}
                       </div>
@@ -428,7 +447,7 @@ const ProfilePage = () => {
                         </h3>
                         <p className="text-foreground">
                           <Badge variant="outline" className="capitalize">
-                            {profile?.role || 'User'}
+                            {localProfile?.role || 'User'}
                           </Badge>
                         </p>
                       </div>
@@ -437,8 +456,8 @@ const ProfilePage = () => {
                           Member Since
                         </h3>
                         <p className="text-foreground">
-                          {profile?.created_at
-                            ? format(new Date(profile.created_at), 'PPP')
+                          {localProfile?.created_at
+                            ? format(new Date(localProfile.created_at), 'PPP')
                             : 'Unknown'}
                         </p>
                       </div>
@@ -631,7 +650,7 @@ const ProfilePage = () => {
                           Phone
                         </h3>
                         <p className="text-foreground">
-                          {profile?.phone || 'Not set'}
+                          {localProfile?.phone || 'Not set'}
                         </p>
                       </div>
                       <div>
@@ -640,7 +659,7 @@ const ProfilePage = () => {
                         </h3>
                         <p className="text-foreground">
                           <Badge variant="outline" className="capitalize">
-                            {profile?.role || 'User'}
+                            {localProfile?.role || 'User'}
                           </Badge>
                         </p>
                       </div>
@@ -649,8 +668,8 @@ const ProfilePage = () => {
                           Member Since
                         </h3>
                         <p className="text-foreground">
-                          {profile?.created_at
-                            ? format(new Date(profile.created_at), 'PPP')
+                          {localProfile?.created_at
+                            ? format(new Date(localProfile.created_at), 'PPP')
                             : 'Unknown'}
                         </p>
                       </div>
@@ -696,6 +715,15 @@ const ProfilePage = () => {
           </div>
         </div>
       </div>
+      {isSaving && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
+          <div
+            className="h-12 w-12 rounded-full border-4 border-green-500/80 border-t-transparent animate-spin"
+            role="status"
+            aria-label="Saving changes"
+          ></div>
+        </div>
+      )}
     </ProtectedRoute>
   );
 };
