@@ -2,13 +2,65 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env
+  .VITE_SUPABASE_ANON_KEY as string | undefined;
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(
-  SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY
-);
+function createSupabaseStub() {
+  const warn = (method: string) => {
+    if (import.meta.env.DEV) {
+      console.warn(
+        `[Supabase Stub] ${method} called but Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local. See DATABASE_SETUP.md.`
+      );
+    }
+  };
+
+  const auth = {
+    onAuthStateChange: (
+      _cb: (event: unknown, session: unknown) => void
+    ) => {
+      warn('auth.onAuthStateChange');
+      return { data: { subscription: { unsubscribe: () => {} } } } as const;
+    },
+    getSession: async () => {
+      warn('auth.getSession');
+      return { data: { session: null }, error: null } as const;
+    },
+    signInWithPassword: async () => {
+      warn('auth.signInWithPassword');
+      return { data: null, error: new Error('Supabase not configured') };
+    },
+    signUp: async () => {
+      warn('auth.signUp');
+      return { data: null, error: new Error('Supabase not configured') };
+    },
+    signOut: async () => {
+      warn('auth.signOut');
+      return { error: null };
+    },
+  } as const;
+
+  const queryBuilder = () => ({
+    select: (_cols?: string) => ({
+      eq: (_col: string, _val: unknown) => ({
+        single: async () => {
+          warn('from(...).select(...).eq(...).single');
+          return { data: null, error: new Error('Supabase not configured') };
+        },
+      }),
+    }),
+  });
+
+  return {
+    auth,
+    from: (_table: string) => queryBuilder(),
+  } as unknown as ReturnType<typeof createClient<Database>>;
+}
+
+export const supabase =
+  SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY
+    ? createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
+    : createSupabaseStub();

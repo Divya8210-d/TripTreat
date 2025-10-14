@@ -21,6 +21,10 @@ import HotspotsPage from './pages/HotspotsPage';
 import ItineraryPage from './pages/ItineraryPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
+import HostingGuidelinesPage from './pages/HostingGuidelinesPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import TermsPage from './pages/TermsPage';
+import FAQPage from './pages/FAQPage';
 import { useEffect, useState } from 'react';
 import { ThemeProvider } from '@/components/theme-provider';
 import FloatingChatbot from './components/FloatingChatbot';
@@ -98,6 +102,10 @@ const App = () => {
                   <Route path="/transport" element={<TransportPage />} />
                   <Route path="/about" element={<AboutPage />} />
                   <Route path="/contact" element={<ContactPage />} />
+                  <Route path="/host-guidelines" element={<HostingGuidelinesPage />} />
+                  <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                  <Route path="/terms" element={<TermsPage />} />
+                  <Route path="/faq" element={<FAQPage />} />
                   <Route path="/auth" element={<AuthPage />} />
                   {/* Protected routes */}
                   <Route

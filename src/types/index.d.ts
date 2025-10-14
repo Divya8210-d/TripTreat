@@ -1,4 +1,4 @@
-interface Application {}
+type Application = Record<string, never>;
 
 type AuthContextType = {
   session: Session | null;
@@ -157,7 +157,7 @@ interface State {
 type Theme = 'dark' | 'light' | 'system';
 
 interface ThemeProviderProps {
-  children: React.ReachNode;
+  children: React.ReactNode;
   defaultTheme?: Theme;
   storageKey?: string;
 };
