@@ -22,7 +22,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { UserIcon, PlaneTakeoff, SettingsIcon } from 'lucide-react';
 
 const ProfilePage = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
   const [bookings, setBookings] = useState<BookingWithListing[]>([]);
@@ -40,6 +40,7 @@ const ProfilePage = () => {
   const [showAvatarOptions, setShowAvatarOptions] = useState(false);
   const [tempAvatarUrl, setTempAvatarUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [avatarRemoved, setAvatarRemoved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [localProfile, setLocalProfile] = useState<Profile | null>(null);
 
@@ -132,6 +133,7 @@ const ProfilePage = () => {
     });
     setTempAvatarUrl(null);
     setSelectedFile(null);
+    setAvatarRemoved(false);
     setShowAvatarOptions(false);
   };
 
@@ -140,7 +142,7 @@ const ProfilePage = () => {
     
     setIsSaving(true);
     try {
-      let avatarUrl = localProfile?.avatar_url;
+      let avatarUrl: string | null = localProfile?.avatar_url || null;
 
       // Handle avatar changes
       if (selectedFile) {
@@ -160,10 +162,11 @@ const ProfilePage = () => {
           .getPublicUrl(fileName);
 
         avatarUrl = publicUrl;
-      } else if (tempAvatarUrl === null && selectedFile === null && localProfile?.avatar_url) {
-        // Avatar is being removed (user clicked remove but no new file selected)
-        avatarUrl = undefined;
+      } else if (avatarRemoved) {
+        // Avatar is being removed (user explicitly clicked remove)
+        avatarUrl = null;
       }
+      // If neither selectedFile nor avatarRemoved, keep the existing avatarUrl
 
       // Update profile with all data including new avatar URL
       const updateData: any = {
@@ -173,12 +176,8 @@ const ProfilePage = () => {
         updated_at: new Date().toISOString()
       };
 
-      // Only update avatar_url if it's not undefined
-      if (avatarUrl !== undefined) {
-        updateData.avatar_url = avatarUrl;
-      } else {
-        updateData.avatar_url = null;
-      }
+      // Always update avatar_url (either with new URL, existing URL, or null if removed)
+      updateData.avatar_url = avatarUrl;
 
       const { error } = await supabase
         .from('profiles')
@@ -191,26 +190,17 @@ const ProfilePage = () => {
       setIsEditMode(false);
       setTempAvatarUrl(null);
       setSelectedFile(null);
+      setAvatarRemoved(false);
       setShowAvatarOptions(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
       
-      // Refresh relevant data without a full page reload
-      await fetchUserData();
-
-      // Optimistically update local profile for immediate UI reflection
-      setLocalProfile(prev => {
-        const previous = prev ?? ({} as Profile);
-        return {
-          ...previous,
-          first_name: editForm.first_name,
-          last_name: editForm.last_name,
-          phone: editForm.phone,
-          avatar_url: avatarUrl !== undefined ? (avatarUrl ?? null) : null,
-          updated_at: new Date().toISOString(),
-        } as Profile;
-      });
+      // Refresh global profile state and other user data
+      await Promise.all([
+        refreshProfile(),
+        fetchUserData()
+      ]);
     } catch (error: any) {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile. Please try again.');
@@ -228,6 +218,7 @@ const ProfilePage = () => {
   const handleRemoveAvatar = () => {
     setTempAvatarUrl(null);
     setSelectedFile(null);
+    setAvatarRemoved(true);
     setShowAvatarOptions(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -243,6 +234,7 @@ const ProfilePage = () => {
     const tempUrl = URL.createObjectURL(file);
     setTempAvatarUrl(tempUrl);
     setSelectedFile(file);
+    setAvatarRemoved(false); // Reset removal state when new file is selected
     setShowAvatarOptions(false);
     // Reset the input so selecting the same file later still triggers onChange
     if (fileInputRef.current) {

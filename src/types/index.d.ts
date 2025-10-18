@@ -12,6 +12,7 @@ type AuthContextType = {
     userData: object
   ) => Promise<{ error: Error | null; data: { user: User | null } | null }>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
   isAdmin: boolean;
   isHost: boolean;
 };
