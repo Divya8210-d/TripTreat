@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,9 +9,13 @@ import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const SignupPage = () => {
   const { signUp, isLoading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -62,7 +67,28 @@ const SignupPage = () => {
             <CardHeader className="space-y-1 text-center">
               <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
               <CardDescription>Sign up to get started</CardDescription>
+
+              {/* Tabs Navigation */}
+              <Tabs value="signup" className="w-full">
+                <TabsList className="grid grid-cols-2 w-full">
+                  <TabsTrigger
+                    value="login"
+                    onClick={() => navigate('/login')}
+                    className="cursor-pointer"
+                  >
+                    Login
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="signup"
+                    onClick={() => navigate('/signup')}
+                    className="cursor-pointer"
+                  >
+                    Signup
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </CardHeader>
+
             <form onSubmit={handleSignup}>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -87,6 +113,7 @@ const SignupPage = () => {
                     />
                   </div>
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <Input
@@ -98,6 +125,7 @@ const SignupPage = () => {
                     required
                   />
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <div className="relative">
@@ -120,6 +148,7 @@ const SignupPage = () => {
                     </button>
                   </div>
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="confirm-password">Confirm Password</Label>
                   <div className="relative">
@@ -143,6 +172,7 @@ const SignupPage = () => {
                   </div>
                 </div>
               </CardContent>
+
               <CardFooter>
                 <Button type="submit" className="w-full bg-primary" disabled={isSubmitting || isLoading}>
                   {isSubmitting ? 'Creating Account...' : 'Create Account'}

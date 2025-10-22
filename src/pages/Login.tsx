@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
@@ -13,6 +14,8 @@ import Footer from '@/components/Footer';
 const LoginPage = () => {
   const { user, signIn, isLoading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -35,9 +38,7 @@ const LoginPage = () => {
     const { error } = await signIn(email, password);
     setIsSubmitting(false);
 
-    if (!error) {
-      // redirect happens automatically
-    }
+    if (error) toast.error(error.message || 'Login failed');
   };
 
   return (
@@ -49,7 +50,28 @@ const LoginPage = () => {
             <CardHeader className="space-y-1 text-center">
               <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
               <CardDescription>Sign in to your account</CardDescription>
+
+              {/* Tabs Navigation */}
+              <Tabs value="login" className="w-full">
+                <TabsList className="grid grid-cols-2 w-full">
+                  <TabsTrigger
+                    value="login"
+                    onClick={() => navigate('/login')}
+                    className="cursor-pointer"
+                  >
+                    Login
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="signup"
+                    onClick={() => navigate('/signup')}
+                    className="cursor-pointer"
+                  >
+                    Signup
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </CardHeader>
+
             <form onSubmit={handleLogin}>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -63,6 +85,7 @@ const LoginPage = () => {
                     required
                   />
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <div className="relative">
@@ -79,13 +102,13 @@ const LoginPage = () => {
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                 </div>
               </CardContent>
+
               <CardFooter>
                 <Button type="submit" className="w-full bg-primary" disabled={isSubmitting || isLoading}>
                   {isSubmitting ? 'Signing in...' : 'Sign In'}
