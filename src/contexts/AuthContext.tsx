@@ -156,6 +156,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const refreshProfile = async () => {
+    if (user) {
+      await fetchUserProfile(user.id);
+    }
+  };
+
   const value = {
     session,
     user,
@@ -164,6 +170,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     signIn,
     signUp,
     signOut,
+    refreshProfile,
     isAdmin,
     isHost,
   };
