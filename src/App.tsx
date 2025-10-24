@@ -109,7 +109,7 @@ const App = () => {
                   <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
                   <Route path="/terms" element={<TermsPage />} />
                   <Route path="/faq" element={<FAQPage />} />
-                   <Route path="/login" element ={<LoginPage/>}/>
+                   <Route path="/signin" element ={<LoginPage/>}/>
                   <Route path="/signup" element ={<SignupPage/>}/>
                   {/* Protected routes */}
                   <Route

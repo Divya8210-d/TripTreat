@@ -303,7 +303,7 @@ const Navbar = () => {
                       </div>
                       <div className="py-1">
                         <Link
-                          to="/login"
+                          to="/signin"
                           className="block px-4 py-2 text-sm text-foreground hover:bg-accent hover:text-accent-foreground"
                           onClick={() => setIsUserMenuOpen(false)}
                         >
