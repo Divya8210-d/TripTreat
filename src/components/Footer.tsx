@@ -75,14 +75,14 @@ const Footer = () => {
               </a>
             </div>
               {/* GitHub Star link */}
-  <div>
+  <div className="mt-4">
     <a
       href="https://github.com/Lanthoiba2022/TripTreat"
       target="_blank"
       rel="noopener noreferrer"
-      className="text-white/80 hover:text-white transition-colors text-sm flex items-center gap-2 mt-2"
-    >
-      ⭐ Star us on <Github size={20} />
+      className="inline-flex items-center gap-3 border border-white/30 rounded-lg px-4 py-2 text-white/80 hover:text-white hover:border-white transition-colors"
+  >      
+  ⭐ Star us on <Github size={20} />
     </a>
   </div>
           </div>
