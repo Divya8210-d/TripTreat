@@ -52,7 +52,8 @@ const LoginPage = () => {
               <CardDescription>Sign in to your account</CardDescription>
 
               {/* Tabs Navigation */}
-              <Tabs value="login" className="w-full">
+             <Tabs defaultValue="signin" className="w-full">
+
                 <TabsList className="grid grid-cols-2 w-full">
                   <TabsTrigger
                     value="signin"
