@@ -55,11 +55,11 @@ const LoginPage = () => {
               <Tabs value="login" className="w-full">
                 <TabsList className="grid grid-cols-2 w-full">
                   <TabsTrigger
-                    value="login"
-                    onClick={() => navigate('/login')}
+                    value="signin"
+                    onClick={() => navigate('/signin')}
                     className="cursor-pointer"
                   >
-                    Login
+                    Signin
                   </TabsTrigger>
                   <TabsTrigger
                     value="signup"
