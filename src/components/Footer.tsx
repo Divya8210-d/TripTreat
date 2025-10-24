@@ -10,6 +10,7 @@ import {
   Twitter,
   Youtube,
   Send,
+  Github,
 } from 'lucide-react';
 
 const Footer = () => {
@@ -73,6 +74,17 @@ const Footer = () => {
                 <Youtube size={20} />
               </a>
             </div>
+              {/* GitHub Star link */}
+  <div className="mt-4">
+    <a
+      href="https://github.com/Lanthoiba2022/TripTreat"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-3 border border-white/30 rounded-lg px-4 py-2 text-white/80 hover:text-white hover:border-white transition-colors"
+  >      
+  ⭐ Star us on <Github size={20} />
+    </a>
+  </div>
           </div>
 
           {/* Quick Links */}
