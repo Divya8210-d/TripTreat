@@ -39,8 +39,8 @@ import AdminDashboard from './pages/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
-import LoginPage from './pages/Login';
-import SignupPage from './pages/Signup';
+
+import AuthPage from './pages/Auth';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -109,8 +109,9 @@ const App = () => {
                   <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
                   <Route path="/terms" element={<TermsPage />} />
                   <Route path="/faq" element={<FAQPage />} />
-                   <Route path="/signin" element ={<LoginPage/>}/>
-                  <Route path="/signup" element ={<SignupPage/>}/>
+                  
+                  <Route path="/auth" element ={<AuthPage/>}/>
+                  
                   {/* Protected routes */}
                   <Route
                     path="/profile"
